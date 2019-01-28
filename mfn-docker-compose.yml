@@ -1,0 +1,31 @@
+version: '3.1'
+
+services:
+  wp:
+    image: wordpress:3.9.2-php7.1-apache
+    restart: always
+    ports:
+      - 8090:80
+    environment:
+      WORDPRESS_DB_HOST: wpdb
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: mfnroot
+      WORDPRESS_DB_NAME: wp
+    volumes:
+      - ~/temp/mfn-wp:/var/www/html
+    networks:
+      - wp-net
+
+  wpdb:
+    image: mysql:5.7.21
+    restart: always
+    environment:
+      MYSQL_DATABASE: wp
+      MYSQL_ROOT_PASSWORD: mfnroot
+    volumes:
+      - ~/temp/mfn-wp-mysql:/var/lib/mysql
+    networks:
+      - wp-net
+
+networks:
+  wp-net:
