@@ -4,7 +4,7 @@ defined( 'ABSPATH' ) or die( 'Not authorized!' );
  * Plugin Name: Manor Farm Nurseries
  * Plugin URI:  none
  * Description: This plugin is specific to the company site. It contains a number of functions to modify the behavior of the site.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Jon Catlin
  * Author URI:  none
  * License:     GPL2
@@ -78,20 +78,21 @@ add_filter( 'woocommerce_cart_total', 'mfn_hide_prices_user_role' ); // Hide car
 /**
  * Hide price/total table headings with CSS.
  */
+/*
 function mfn_hide_cart_checkout_price_headings() {
 	$current_user = wp_get_current_user();
-	$allowed_roles = array( 'wholesale', 'administrator' );
+	$allowed_roles = array( 'customer', 'administrator' );
 	if ( ! array_intersect( $current_user->roles, $allowed_roles ) ) {
 		?><style>
-			.product-price, .product-subtotal, /* Cart */
-			.woocommerce-mini-cart__total, /* Cart widget */
-			.product-total, .cart-subtotal, .order-total /* Checkout */
+			.product-price, .product-subtotal, // Cart 
+			.woocommerce-mini-cart__total, // Cart widget 
+			.product-total, .cart-subtotal, .order-total // Checkout 
 			{ display: none !important; }
 		</style><?php
 	}
 }
 add_action( 'wp_head', 'mfn_hide_cart_checkout_price_headings' );
-
+*/
 
 /**
  * Override for the quick view pro display action
@@ -455,3 +456,37 @@ function mfn_load_css(){
 add_action('wp_enqueue_scripts', 'mfn_load_css', 5000);
 
 */
+
+
+/**
+ * Set a minimum order amount for checkout
+ */
+function mfn_minimum_order_amount() {
+    // Set this variable to specify a minimum order value
+    $minimum = 50;
+
+    if ( WC()->cart->total < $minimum ) {
+
+        if( is_cart() ) {
+
+            wc_print_notice( 
+                sprintf( 'Your current order total is %s. We are sorry but we can only accept orders of %s or greater.' , 
+                    wc_price( WC()->cart->total ), 
+                    wc_price( $minimum )
+                ), 'error' 
+            );
+
+        } else {
+
+            wc_add_notice( 
+                sprintf( 'Your current order total is %s. We are sorry but we can only accept orders of %s or greater. Please return to the cart and add more items.' , 
+                    wc_price( WC()->cart->total ), 
+                    wc_price( $minimum )
+                ), 'error' 
+            );
+
+        }
+    }
+}
+add_action( 'woocommerce_checkout_process', 'mfn_minimum_order_amount' );
+add_action( 'woocommerce_before_cart' , 'mfn_minimum_order_amount' );
