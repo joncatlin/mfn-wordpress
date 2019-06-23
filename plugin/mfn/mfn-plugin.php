@@ -4,13 +4,50 @@ defined( 'ABSPATH' ) or die( 'Not authorized!' );
  * Plugin Name: Manor Farm Nurseries
  * Plugin URI:  none
  * Description: This plugin is specific to the company site. It contains a number of functions to modify the behavior of the site.
- * Version:     1.0.2
+ * Version:     1.1.24
  * Author:      Jon Catlin
  * Author URI:  none
  * License:     GPL2
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: destini.com
  */
+
+// Includes
+include( dirname(__FILE__).'/catalog-pdf.php' );
+
+/**
+ * Function to be called before an import of the catalog begins
+ */
+function mfn_before_import($import_id) {
+	error_log('In mfn_before_import'.PHP_EOL, 3, './debug.log' );
+}
+add_action('pmxi_before_xml_import', 'mfn_before_import', 10, 1);
+
+
+/**
+ * Function to be called after an import of the catalog begins
+ */
+function mfn_after_import($import_id) {
+	error_log('In mfn_after_import'.PHP_EOL, 3, './debug.log' );
+
+	// Create the PDF catalogs
+	CatalogPDF::makePDF(true);
+	CatalogPDF::makePDF(false);
+}
+add_action('pmxi_after_xml_import', 'mfn_after_import', 10, 1);
+
+
+/**
+ * Function to be called when the plugin is activated
+ */
+function mfn_activate() {
+
+    // If the availability lists are missing generate them
+	if (!file_exists(ABSPATH . 'wp-content/uploads/AvailabilityListP.pdf')) CatalogPDF::makePDF(true);
+	if (!file_exists(ABSPATH . 'wp-content/uploads/AvailabilityList.pdf')) CatalogPDF::makePDF(false);
+}
+register_activation_hook( __FILE__, 'mfn_activate' );
+
 
 /**
  * Defines for the rest of the code
@@ -38,16 +75,6 @@ define("DEFAULT_PHOTO", "no-photo");
 /**
  * Hide product price based on user role (or lack thereof).
  */
-/*
-function mfn_hide_prices_user_role( $price ) {
-	$current_user = wp_get_current_user();
-	$allowed_roles = array( 'customer', 'administrator' );
-	if ( ! array_intersect( $current_user->roles, $allowed_roles ) ) {
-	    return '';
-    }
-	return $price;
-}
-*/
 function mfn_hide_prices_user_role( $price ) {
 	$current_user = wp_get_current_user();
 	$allowed_roles = array( 'customer', 'administrator' );
@@ -74,25 +101,6 @@ add_filter( 'woocommerce_cart_item_subtotal', 'mfn_hide_prices_user_role' ); // 
 add_filter( 'woocommerce_cart_subtotal', 'mfn_hide_prices_user_role' ); // Hide cart subtotal price
 add_filter( 'woocommerce_cart_total', 'mfn_hide_prices_user_role' ); // Hide cart total price
 
-
-/**
- * Hide price/total table headings with CSS.
- */
-/*
-function mfn_hide_cart_checkout_price_headings() {
-	$current_user = wp_get_current_user();
-	$allowed_roles = array( 'customer', 'administrator' );
-	if ( ! array_intersect( $current_user->roles, $allowed_roles ) ) {
-		?><style>
-			.product-price, .product-subtotal, // Cart 
-			.woocommerce-mini-cart__total, // Cart widget 
-			.product-total, .cart-subtotal, .order-total // Checkout 
-			{ display: none !important; }
-		</style><?php
-	}
-}
-add_action( 'wp_head', 'mfn_hide_cart_checkout_price_headings' );
-*/
 
 /**
  * Override for the quick view pro display action
@@ -297,8 +305,7 @@ function mfn_translate_photograph( $photo , $type) {
 	$product_photo = preg_replace( '/[^A-Za-z0-9\- \.]/', '', $photo );
 	$filename = str_replace( ' ', '_', strtolower( $product_photo ) );
 	
-	if ( $filename === "" ) $filename = DEFAULT_PHOTO;
-	$filename .= '.jpg';
+	if ( !$filename === "" ) $filename .= '.jpg';
 
 	switch ( $type ) {
 		case "THUMB":
