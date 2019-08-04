@@ -322,8 +322,9 @@ function mfn_translate_photograph( $photo , $type) {
 // Convert the plant name to have the Trophy symbol and remove the old special character at the end of the name
 function mfn_translate_name( $name, $award ) {
 
-	$new_name = preg_replace( '/[[:^ascii:]]/', '', $name );
-	$new_name = trim($new_name);
+// Remove this so that any special characters in the name are OK. Gordon is removing the trophy character
+//	$new_name = preg_replace( '/[[:^ascii:]]/', '', $name );
+	$new_name = trim($name);
 
 	if (strtoupper($award) === "Y") {
 		return 	$new_name .= '<img src="'.MEDIA_PATH.'trophy6.png" alt="" style="max-width: 20px">';
