@@ -174,7 +174,7 @@ function mfn_gallery_image($pid, $attid, $image_filepath) {
 	// Log thye file we are processing
 	$pluginlog = plugin_dir_path(__FILE__).'debug.log';
 	$message = 'In mfn_gallery_image, $image_filepath='.$image_filepath.PHP_EOL;
-//	error_log($message, 3, $pluginlog);
+	error_log($message, 3, $pluginlog);
 
 	// Determine if this is a new file or a copy as only watermark a new file
 	// New files end in -1.jpg
@@ -183,9 +183,9 @@ function mfn_gallery_image($pid, $attid, $image_filepath) {
 	$length1 = strlen($endString1);
 	$length2 = strlen($endString2);
     if ((substr($image_filepath, -$length1) === $endString1) or (substr($image_filepath, -$length2) === $endString2)) {
-//		error_log('File is a copy so ignore it'.PHP_EOL, 3, $pluginlog);
+		error_log('File is a copy so ignore it'.PHP_EOL, 3, $pluginlog);
 	} else {
-//		error_log('File is new so water mark it'.PHP_EOL, 3, $pluginlog);
+		error_log('File is new so water mark it'.PHP_EOL, 3, $pluginlog);
 
 		// remove the ending file type of .jpg
 		$len = strlen('.jpg');
@@ -302,20 +302,35 @@ function mfn_translate_category( $cat ) {
 
 // Convert the photo name to the name of the image file to be used
 function mfn_translate_photograph( $photo , $type) {
-	$product_photo = preg_replace( '/[^A-Za-z0-9\- \.]/', '', $photo );
-	$filename = str_replace( ' ', '_', strtolower( $product_photo ) );
-	
-	if ( !$filename === "" ) $filename .= '.jpg';
+	// Log all the variables
+	$pluginlog = plugin_dir_path(__FILE__).'debug.log';
 
-	switch ( $type ) {
-		case "THUMB":
-			return PHOTO_THUMB_PATH.$filename;
-		case "DETAIL":
-			return PHOTO_DETAIL_PATH.$filename;
-		case "ORIGINAL":
-			return PHOTO_ORIGINAL_PATH.$filename;
+	if ( strlen($photo) > 0 ) {
+
+		$product_photo = preg_replace( '/[^A-Za-z0-9\- \.]/', '', $photo );
+		$filename = str_replace( ' ', '_', strtolower( $product_photo ) );
+
+		$message = 'In mfn_translate_photograph, $photo='.$photo.'  $product_photo='.$product_photo.'  $filename='.$filename.PHP_EOL;
+		error_log($message, 3, $pluginlog);
+
+		$filename .= '.jpg';
+
+		switch ( $type ) {
+			case "THUMB":
+				return PHOTO_THUMB_PATH.$filename;
+			case "DETAIL":
+				return PHOTO_DETAIL_PATH.$filename;
+			case "ORIGINAL":
+				return PHOTO_ORIGINAL_PATH.$filename;
+		}
+		$message = 'In mfn_translate_photograph, $filename='.$filename.PHP_EOL;
+		error_log($message, 3, $pluginlog);
+		return PHOTO_ORIGINAL_PATH.$filename;
+	} else {
+		$message = 'In mfn_translate_photograph NO PHOTO GIVEN IN UPLOAD, $photo='.$photo.PHP_EOL;
+		error_log($message, 3, $pluginlog);
+		return "";
 	}
-	return PHOTO_ORIGINAL_PATH.$filename;
 }
 
 
