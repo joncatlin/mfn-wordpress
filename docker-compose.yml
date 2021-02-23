@@ -1,19 +1,18 @@
-version: '3.2'
+version: '3.1'
 
 services:
   wp:
     image: wordpress:php7.2-apache
     restart: always
     ports:
-      - target: 80
-#        published: 8080
+      - 8090:80
     environment:
       WORDPRESS_DB_HOST: wpdb
       WORDPRESS_DB_USER: root
-      WORDPRESS_DB_PASSWORD: mfnroot
+      WORDPRESS_DB_PASSWORD: jacquiroot
       WORDPRESS_DB_NAME: wp
     volumes:
-      - /mnt/swarm-shared/joncatlin-development/mfn-wordpress:/var/www/html
+      - /mnt/swarm-shared/joncatlin-development/jacqui-wordpress:/var/www/html
     networks:
       - wp-net
 
@@ -22,9 +21,9 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: wp
-      MYSQL_ROOT_PASSWORD: mfnroot
+      MYSQL_ROOT_PASSWORD: jacquiroot
     volumes:
-      -  /mnt/swarm-shared/joncatlin-development/mfn-wp-mysql:/var/lib/mysql
+      -  /mnt/swarm-shared/joncatlin-development/jacqui-wp-mysql:/var/lib/mysql
     networks:
       - wp-net
 

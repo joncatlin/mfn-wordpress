@@ -3,17 +3,17 @@ defined( 'ABSPATH' ) or die( 'Not authorized!' );
 /**
  * Plugin Name: Manor Farm Nurseries
  * Plugin URI:  none
- * Description: This plugin is specific to the company site. It contains a number of functions to modify the behavior of the site.
- * Version:     1.1.24
+ * Description: This plu9in is specific to the company site. It contains a number of functions to modify the behavior of the site.
+ * Version:     1.1.31
  * Author:      Jon Catlin
  * Author URI:  none
- * License:     GPL2
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * License:     proprietary 
  * Text Domain: destini.com
  */
 
 // Includes
 include( dirname(__FILE__).'/catalog-pdf.php' );
+include( dirname(__FILE__).'/nextgen-converter.php' );
 
 /**
  * Function to be called before an import of the catalog begins
@@ -36,6 +36,10 @@ function mfn_after_import($import_id) {
 }
 add_action('pmxi_after_xml_import', 'mfn_after_import', 10, 1);
 
+/**
+ * Add an action to call the make PDF catalog function when a button is pressed in the Frontend UI
+ */
+add_action( 'admin_post_update_pdf_catalog', 'mfn_after_import' );
 
 /**
  * Function to be called when the plugin is activated
@@ -68,7 +72,7 @@ $site_url = get_site_url( null, '', null );
 // Media path to icons
 define("MEDIA_PATH", $site_url."/wp-content/uploads/");
 define("PHOTO_THUMB_PATH", $site_url."/wp-content/plant_photos/thumbnail/");
-define("PHOTO_DETAIL_PATH", $site_url."/wp-content/plant_photos/medium/");
+define("PHOTO_DETAIL_PATH", $site_url."/wp-content/plant_photos/detail/");
 define("PHOTO_ORIGINAL_PATH", $site_url."/wp-content/plant_photos/original/");
 define("DEFAULT_PHOTO", "no-photo");
 
@@ -165,44 +169,48 @@ function mfn_quick_view_pro_override_image ($product) {
 }
 add_action( 'mfn_quick_view_pro_quick_view_before_product_details', 'mfn_quick_view_pro_override_image' );
 
-/**
- * This function should be fired when wp all import uploads an image
- */
-function mfn_gallery_image($pid, $attid, $image_filepath) {
-    $attachment = get_post($attid);
+/*
+* DO NOT MOVE IMAGES OR CHANGE THEM, THIS FUNCTIONALITY IS BEING HANDLED BY THE NEXTGEN GALLERY PLUGIN
+*/
 
-	// Log thye file we are processing
-	$pluginlog = plugin_dir_path(__FILE__).'debug.log';
-	$message = 'In mfn_gallery_image, $image_filepath='.$image_filepath.PHP_EOL;
-//	error_log($message, 3, $pluginlog);
+// /**
+//  * This function should be fired when wp all import uploads an image
+//  */
+// function mfn_gallery_image($pid, $attid, $image_filepath) {
+//     $attachment = get_post($attid);
 
-	// Determine if this is a new file or a copy as only watermark a new file
-	// New files end in -1.jpg
-	$endString1 = "-1.jpg";
-	$endString2 = "-1-1.jpg";
-	$length1 = strlen($endString1);
-	$length2 = strlen($endString2);
-    if ((substr($image_filepath, -$length1) === $endString1) or (substr($image_filepath, -$length2) === $endString2)) {
-//		error_log('File is a copy so ignore it'.PHP_EOL, 3, $pluginlog);
-	} else {
-//		error_log('File is new so water mark it'.PHP_EOL, 3, $pluginlog);
+// 	// Log the file we are processing
+// 	$pluginlog = plugin_dir_path(__FILE__).'debug.log';
+// 	$message = 'In mfn_gallery_image, $image_filepath='.$image_filepath.PHP_EOL;
+// //	error_log($message, 3, $pluginlog);
 
-		// remove the ending file type of .jpg
-		$len = strlen('.jpg');
-		$find_name = substr($image_filepath, 0, -$len).'-*.jpg';
+// 	// Determine if this is a new file or a copy as only watermark a new file
+// 	// New files end in -1.jpg
+// 	$endString1 = "-1.jpg";
+// 	$endString2 = "-1-1.jpg";
+// 	$length1 = strlen($endString1);
+// 	$length2 = strlen($endString2);
+//     if ((substr($image_filepath, -$length1) === $endString1) or (substr($image_filepath, -$length2) === $endString2)) {
+// //		error_log('File is a copy so ignore it'.PHP_EOL, 3, $pluginlog);
+// 	} else {
+// //		error_log('File is new so water mark it'.PHP_EOL, 3, $pluginlog);
 
-		// Add the copyright to the original
-		addCopyright( $image_filepath );
+// 		// remove the ending file type of .jpg
+// 		$len = strlen('.jpg');
+// 		$find_name = substr($image_filepath, 0, -$len).'-*.jpg';
 
-		// find all files that are a match -*.jpg which are different resolutions
-		// Then copright them as well
-		foreach (glob($find_name) as $filename) {
-			addCopyright( $filename );
-		}
-	}
+// 		// Add the copyright to the original
+// 		addCopyright( $image_filepath );
 
-}
-add_action('pmxi_gallery_image', 'mfn_gallery_image', 10, 3);
+// 		// find all files that are a match -*.jpg which are different resolutions
+// 		// Then copright them as well
+// 		foreach (glob($find_name) as $filename) {
+// 			addCopyright( $filename );
+// 		}
+// 	}
+
+// }
+// add_action('pmxi_gallery_image', 'mfn_gallery_image', 10, 3);
 
 /*
 	* Put a copyright statement in an image
@@ -303,9 +311,11 @@ function mfn_translate_category( $cat ) {
 // Convert the photo name to the name of the image file to be used
 function mfn_translate_photograph( $photo , $type) {
 	$product_photo = preg_replace( '/[^A-Za-z0-9\- \.]/', '', $photo );
-	$filename = str_replace( ' ', '_', strtolower( $product_photo ) );
+//	$filename = str_replace( ' ', '-', strtolower( $product_photo ) );
+	$filename = str_replace( ' ', '-', $product_photo );
 	
-	if ( !$filename === "" ) $filename .= '.jpg';
+	// if ( !$filename === "" ) $filename .= '.jpg';
+	if ( !empty( $filename ) ) $filename .= '.jpg';
 
 	switch ( $type ) {
 		case "THUMB":
