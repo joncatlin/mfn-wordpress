@@ -112,8 +112,14 @@ class CatalogPDF {
 			$documentHtml = '';
 	
 			$all_categories = get_categories( $args );
+
+error_log('All categories = '.print_r($all_categories, true), 3, './debug.log' );
+
+
 			foreach ($all_categories as $cat) 
 			{
+error_log('$cat = '.print_r($cat, true), 3, './debug.log' );
+
 				if($cat->category_parent == 0 && $cat->count > 0) 
 				{
 					// Set the new category
@@ -188,6 +194,13 @@ class CatalogPDF {
 				}       
 			}
 
+			// Finish the table and throw a new page if this is not the first page
+			$documentHtml .= '</tbody></table>';
+
+			// Write out the HTML
+			$mpdf->WriteHTML($documentHtml, 2, false, false);
+
+			// Write out the PDF			
 			$mpdf->Output($file_name, 'F');
 
 		} catch (Exception $e) {
